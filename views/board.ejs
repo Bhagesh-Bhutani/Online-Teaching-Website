@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>WhiteBoard</title>
+    <script
+    src="https://code.jquery.com/jquery-3.5.1.js"
+    integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
+    crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="https://unpkg.com/konva@7.0.4/konva.min.js"></script>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="chat.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/RecordRTC/5.6.1/RecordRTC.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.15.5/firebase.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.15.5/firebase-analytics.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.15.5/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.0/socket.io.js"></script>
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.1/css/all.min.css">
+    <style>
+      #container{
+        background-color: white;
+      }
+
+      #container:hover{
+      }
+      video{
+        float: right;
+        position: relative;
+        right: 0;
+        width: 15%;
+        height: 10%;
+        border-radius: 2%;
+        display: inline-block;
+        /* cursor: pointer; */
+        /* z-index: 10; */
+        /* transition: 1s; */
+      }
+      /* video{
+        position: relative;
+        top: 20%;
+        right: -5%;
+        width: 25%;
+        height: 20%;
+        z-index: 10;
+      } */
+
+      .color_picker{
+        cursor: grab;
+      }
+
+      a{
+    text-decoration: none;
+    color:white;
+}
+        .symbol{
+            color: black;
+            font-size: xx-large;
+        }
+        
+        .symbol:hover{
+            cursor: pointer;
+            border: solid black 1px;
+        }
+    </style>
+  </head>
+
+  <body>
+
+      <nav>
+        <div class="nav-wrapper grey darken-3">
+          <ul id="nav-mobile">
+            <!-- <li><a class="input-field col s12" style="display: inline-block;">
+              <select id="tool" style="color:white;" class="select-dropdown">
+                <option value="brush">Brush</option>
+                <option value="eraser">Eraser</option>
+                <option value="line">Line</option>
+                <option value="grid_lines">Grid Lines</option>
+                <option value="shape_edit">Shape</option>
+                <option value="bg_color">Background Color</option>
+                <option value="fill">Fill</option>
+                <option value="scale">Scale</option>
+                <option value="protractor">Protractor</option>
+              </select>
+            </a></li> -->
+            <li><a id="clear_btn" class="tooltipped" data-position="bottom" data-tooltip="Clear"><i class="material-icons">clear</i></a></li>
+            <li><a id="save_page" class="tooltipped" data-position="bottom" data-tooltip="Save"><i class="material-icons">save</i></a></li>
+            <li><a href="#" class="tooltipped" id="share_screen" data-position="bottom" data-tooltip="Share Screen"><i class="material-icons">screen_share</i></a></li>
+            <li><a id="mytextbox" class="tooltipped" data-position="bottom" data-tooltip="Textbox"><i class="material-icons">text_format</i></a></li>
+            <li><a href="#" class="tooltipped" data-tooltip="Grid Lines"><i class="fa fa-th dropdown-trigger" aria-hidden="true" data-target="grid_dropdown"></i></a></li>
+            <li>
+              <a style="cursor: default;" class="tooltipped" data-position="bottom" data-tooltip="Upload Image">
+                <label for="fileInput" id="my_label"><i class="material-icons" style="color: white;cursor:pointer;">file_upload</i></label>
+                <input type="file" id="fileInput" onchange="ValidateInput(this);" style="display: none;">
+              </a>
+            </li>
+            
+            <li><a href="#" id="zoom_out" class="tooltipped" data-position="bottom" data-tooltip="Zoom Out"><i class="material-icons">zoom_out</i></a></li>
+            <li><span id="zoom_meter">100</span>%</li>
+            <li><a href="#" id="zoom_in" class="tooltipped" data-position="bottom" data-tooltip="Zoom In"><i class="material-icons">zoom_in</i></a></li>
+            <li><a id="graph" class="tooltipped" data-position="bottom" data-tooltip="Graph"><i class="material-icons">grid_on</i></a></li>
+            <li><a href="#" class="tooltipped" data-position="bottom" data-tooltip="Fill Tool"><i data-value="fill" class="material-icons tools">format_color_fill</i></a></li>
+            <li><a class="modal-trigger" href="#symbol_modal"><i class="fas fa-square-root-alt"></i></a></li>
+            <li>
+              <input type="range" id='set_bar' min="0" max="40" style="width: 100%;" class="tooltipped" data-position="bottom" data-tooltip="Size">
+            </li>
+            <li><a class="tooltipped tools" data-position="bottom" data-tooltip="Brush"><i class="material-icons" data-value="brush">brush</i></a></li>
+            <li><a class="tooltipped" data-position="bottom" data-tooltip="Eraser"><i data-value="eraser" class="material-icons tools">crop_square</i></a></li>
+            <li><a href="#" class="tooltipped dropdown-trigger" data-position="bottom" data-tooltip="Geometrical Tools" data-target="geometry_dropdown"><i class="material-icons" >straighten</i></a></li>
+            <li><a href="#" class="tooltipped dropdown-trigger" data-position="bottom" data-tooltip="Shapes" data-target="shapes_dropdown"><i class="fas fa-shapes"></i></a></li>
+            <li><a href="#" class="tooltipped" data-position="bottom" data-tooltip="Color Palette"><label for="rgb_picker" style="cursor: pointer;color:white;"><i class="material-icons">color_lens</i></label><input type="color" id="rgb_picker" style="display: none;"></a></li>
+            <li><a data-value="bg_color" class="tools tooltipped" data-tooltip="Background Mode" data-position="bottom">BG</a></li>
+            <!-- <div style="display:inline-block;"></div> -->
+            <div class="card-panel black color_picker tooltipped" data-position="bottom" data-tooltip="Black" style="height:3%;width:3%;" id="black"></div>
+            <div class="card-panel red color_picker tooltipped" data-position="bottom" data-tooltip="Red" style="height:3%;width:3%;" id="red"></div>
+            <div class="card-panel green color_picker tooltipped" data-position="bottom" data-tooltip="Green" style="height:3%;width:3%;" id="green"></div>
+            <div class="card-panel blue color_picker tooltipped" data-position="bottom" data-tooltip="Blue" style="height:3%;width:3%;" id="blue"></div>
+            <div class="card-panel yellow color_picker tooltipped" data-position="bottom" data-tooltip="Yellow" style="height:3%;width:3%;" id="yellow"></div>
+            <!-- <div class="card-panel orange color_picker" style="display:inline-block;height:3%;width:3%;" id="orange"></div> -->
+            <!-- <div class="card-panel pink lighten-4 color_picker tooltipped" data-position="bottom" data-tooltip="Pink" style="display:inline-block;height:3%;width:3%;" id="pink"></div> -->
+            <!-- <div class="card-panel white color_picker tooltipped" data-position="bottom" data-tooltip="White" style="height:3%;width:3%;" id="white"></div> -->
+            
+          </ul>
+        </div>
+      </nav>
+
+      <!-- Shapes Dropdown Content -->
+      <ul id="shapes_dropdown" class="dropdown-content">
+        <li><a href="#" id='circle_btn' class='shape_btns'>Circle</a></li>
+        <li><a href="#" id='rectangle_btn' class='shape_btns'>Rectangle</a></li>
+        <li><a href="#" id='square_btn' class='shape_btns'>Square</a></li>
+        <li><a href="#" id='triangle_btn' class='shape_btns polygon' data-sides="3">Triangle</a></li>
+        <li><a href="#" id='pentagon_btn' class='shape_btns polygon' data-sides="5">Pentagon</a></li>
+        <li><a href="#" id='hexagon_btn' class='shape_btns polygon' data-sides="6">Hexagon</a></li>
+        <li><a href="#" id='heptagon_btn' class='shape_btns polygon' data-sides="7">Heptagon</a></li>
+        <li><a href="#" id='octagon_btn' class='shape_btns polygon' data-sides="8">Octagon</a></li>
+        <li><a href="#" id='nonagon_btn' class='shape_btns polygon' data-sides="9">Nonagon</a></li>
+        <li><a href="#" id='decagon_btn' class='shape_btns polygon' data-sides="10">Decagon</a></li>
+      </ul>
+
+      <!-- Grid Lines dropdown Content-->
+      <ul id="grid_dropdown" class="dropdown-content">
+        <li><a href="#" id='no_grid' class='grid'>No Grid</a></li>
+        <li><a href="#" id='sq_grid' class='grid'>Square Grid</a></li>
+        <li><a href="#" id='w1_grid' class='grid'>Writing Grid</a></li>
+      </ul>
+
+      <!-- Geometry Tools Dropdown Content -->
+      <ul id="geometry_dropdown" class="dropdown-content">
+        <li><a href="#" data-value="scale" class="tools">Scale</a></li>
+        <li><a href="#" data-value="protractor" class="tools">Protractor</a></li>
+        <li><a href="#" data-value="line" class="tools">Line Tool</a></li>
+      </ul>
+    
+    <ul id="slide-out" class="sidenav">
+      <li><div class="user-view">
+        <div class="background teal lighten-2">
+          
+        </div>
+        List of Participants
+      </div></li>
+      
+    </ul>
+    <a href="#" data-target="slide-out" class="sidenav-trigger btn-floating btn-large waves-effect waves-light black tooltipped" data-position="top" data-tooltip="Live Participants" style="position:fixed;bottom:10%;left:1%;"><i class="material-icons">person</i></a>
+    
+    <a href="#" class="waves-effect waves-light btn-large red" id="mute_self" style="position: fixed;bottom:12%;right:1%">Mute Self</a>
+    <a href="#" class="waves-effect waves-light btn-large black" id="request_access" style="position: fixed;bottom:1%;left:0.5%">Request Board Access</a>
+  
+    <a href="#" id="chatbtn" class="btn-floating btn-large waves-effect waves-light black"><i class="material-icons">chat</i></a>
+      <div id="chatwindow">
+        <div id="chat_header" style="font-weight: bold;">Chat<i class="material-icons clickable">close</i></div>
+        <ul id="chatmsgs">
+  
+        </ul>
+        <form id="myform">
+          <div class="input-field">
+            <i class="material-icons prefix">mode_edit</i>
+            <input id="message" name="message" type="text" class="validate" required="" aria-required="true" style="position: relative;width:70%;">
+            <button id="submitbtn" class="btn-floating waves-effect waves-light"><i class="material-icons">send</i></button>
+          </div>
+        </form>
+      </div>
+
+      
+
+  <!-- Modal Structure -->
+  <div id="symbol_modal" class="modal">
+    <div class="modal-content">
+        <span class="symbol" data-clipboard-text="π">π</span>
+        <span class="symbol" data-clipboard-text="∞">∞</span>
+        <span class="symbol" data-clipboard-text="Σ">Σ</span>
+        <span class="symbol" data-clipboard-text="√">√</span>
+        <span class="symbol" data-clipboard-text="∛">∛</span>
+        <span class="symbol" data-clipboard-text="∜">∜</span>
+        <span class="symbol" data-clipboard-text="∫">∫</span>
+        <span class="symbol" data-clipboard-text="∬">∬</span>
+        <span class="symbol" data-clipboard-text="∭">∭</span>
+        <span class="symbol" data-clipboard-text="∮">∮</span>
+        <span class="symbol" data-clipboard-text="∯">∯</span>
+        <span class="symbol" data-clipboard-text="∰">∰</span>
+        <span class="symbol" data-clipboard-text="∱">∱</span>
+        <span class="symbol" data-clipboard-text="∲">∲</span>
+        <span class="symbol" data-clipboard-text="∳">∳</span>
+        <span class="symbol" data-clipboard-text="∀">∀</span>
+        <span class="symbol" data-clipboard-text="∁">∁</span>
+        <span class="symbol" data-clipboard-text="∂">∂</span>
+        <span class="symbol" data-clipboard-text="∃">∃</span>
+        <span class="symbol" data-clipboard-text="∄">∄</span>
+        <span class="symbol" data-clipboard-text="∅">∅</span>
+        <span class="symbol" data-clipboard-text="∆">∆</span>
+        <span class="symbol" data-clipboard-text="∇">∇</span>
+        <span class="symbol" data-clipboard-text="∈">∈</span>
+        <span class="symbol" data-clipboard-text="∉">∉</span>
+        <span class="symbol" data-clipboard-text="∊">∊</span>
+        <span class="symbol" data-clipboard-text="∋">∋</span>
+        <span class="symbol" data-clipboard-text="∌">∌</span>
+        <span class="symbol" data-clipboard-text="∍">∍</span>
+        <span class="symbol" data-clipboard-text="∎">∎</span>
+        <span class="symbol" data-clipboard-text="∏">∏</span>
+        <span class="symbol" data-clipboard-text="∐">∐</span>
+        <span class="symbol" data-clipboard-text="∑">∑</span>
+        <span class="symbol" data-clipboard-text="−">−</span>
+        <span class="symbol" data-clipboard-text="∓">∓</span>
+        <span class="symbol" data-clipboard-text="∔">∔</span>
+        <span class="symbol" data-clipboard-text="∕">∕</span>
+        <span class="symbol" data-clipboard-text="∖">∖</span>
+        <span class="symbol" data-clipboard-text="∗">∗</span>
+        <span class="symbol" data-clipboard-text="∘">∘</span>
+        <span class="symbol" data-clipboard-text="∙">∙</span>
+        <span class="symbol" data-clipboard-text="∝">∝</span>
+        <span class="symbol" data-clipboard-text="∟">∟</span>
+        <span class="symbol" data-clipboard-text="∠">∠</span>
+        <span class="symbol" data-clipboard-text="∡">∡</span>
+        <span class="symbol" data-clipboard-text="∢">∢</span>
+        <span class="symbol" data-clipboard-text="∣">∣</span>
+        <span class="symbol" data-clipboard-text="∤">∤</span>
+        <span class="symbol" data-clipboard-text="∥">∥</span>
+        <span class="symbol" data-clipboard-text="∦">∦</span>
+        <span class="symbol" data-clipboard-text="∧">∧</span>
+        <span class="symbol" data-clipboard-text="∨">∨</span>
+        <span class="symbol" data-clipboard-text="∩">∩</span>
+        <span class="symbol" data-clipboard-text="∪">∪</span>
+        <span class="symbol" data-clipboard-text="∴">∴</span>
+        <span class="symbol" data-clipboard-text="∵">∵</span>
+        <span class="symbol" data-clipboard-text="∶">∶</span>
+        <span class="symbol" data-clipboard-text="∷">∷</span>
+        <span class="symbol" data-clipboard-text="∸">∸</span>
+        <span class="symbol" data-clipboard-text="∹">∹</span>
+        <span class="symbol" data-clipboard-text="∺">∺</span>
+        <span class="symbol" data-clipboard-text="∻">∻</span>
+        <span class="symbol" data-clipboard-text="∼">∼</span>
+        <span class="symbol" data-clipboard-text="∽">∽</span>
+        <span class="symbol" data-clipboard-text="∾">∾</span>
+        <span class="symbol" data-clipboard-text="∿">∿</span>
+        <span class="symbol" data-clipboard-text="≀">≀</span>
+        <span class="symbol" data-clipboard-text="≁">≁</span>
+        <span class="symbol" data-clipboard-text="≂">≂</span>
+        <span class="symbol" data-clipboard-text="≃">≃</span>
+        <span class="symbol" data-clipboard-text="≄">≄</span>
+        <span class="symbol" data-clipboard-text="≅">≅</span>
+        <span class="symbol" data-clipboard-text="≆">≆</span>
+        <span class="symbol" data-clipboard-text="≇">≇</span>
+        <span class="symbol" data-clipboard-text="≈">≈</span>
+        <span class="symbol" data-clipboard-text="≉">≉</span>
+        <span class="symbol" data-clipboard-text="≊">≊</span>
+        <span class="symbol" data-clipboard-text="≋">≋</span>
+        <span class="symbol" data-clipboard-text="≌">≌</span>
+        <span class="symbol" data-clipboard-text="≍">≍</span>
+        <span class="symbol" data-clipboard-text="≎">≎</span>
+        <span class="symbol" data-clipboard-text="≏">≏</span>
+        <span class="symbol" data-clipboard-text="≐">≐</span>
+        <span class="symbol" data-clipboard-text="≑">≑</span>
+        <span class="symbol" data-clipboard-text="≒">≒</span>
+        <span class="symbol" data-clipboard-text="≓">≓</span>
+        <span class="symbol" data-clipboard-text="≔">≔</span>
+        <span class="symbol" data-clipboard-text="≕">≕</span>
+        <span class="symbol" data-clipboard-text="≖">≖</span>
+        <span class="symbol" data-clipboard-text="≗">≗</span>
+        <span class="symbol" data-clipboard-text="≘">≘</span>
+        <span class="symbol" data-clipboard-text="≙">≙</span>
+        <span class="symbol" data-clipboard-text="≚">≚</span>
+        <span class="symbol" data-clipboard-text="≛">≛</span>
+        <span class="symbol" data-clipboard-text="≜">≜</span>
+        <span class="symbol" data-clipboard-text="≝">≝</span>
+        <span class="symbol" data-clipboard-text="≞">≞</span>
+        <span class="symbol" data-clipboard-text="≟">≟</span>
+        <span class="symbol" data-clipboard-text="≠">≠</span>
+        <span class="symbol" data-clipboard-text="≡">≡</span>
+        <span class="symbol" data-clipboard-text="≢">≢</span>
+        <span class="symbol" data-clipboard-text="≣">≣</span>
+        <span class="symbol" data-clipboard-text="≤">≤</span>
+        <span class="symbol" data-clipboard-text="≥">≥</span>
+        <span class="symbol" data-clipboard-text="≦">≦</span>
+        <span class="symbol" data-clipboard-text="≧">≧</span>
+        <span class="symbol" data-clipboard-text="≨">≨</span>
+        <span class="symbol" data-clipboard-text="≩">≩</span>
+        <span class="symbol" data-clipboard-text="≪">≪</span>
+        <span class="symbol" data-clipboard-text="≫">≫</span>
+        <span class="symbol" data-clipboard-text="≬">≬</span>
+        <span class="symbol" data-clipboard-text="≭">≭</span>
+        <span class="symbol" data-clipboard-text="≮">≮</span>
+        <span class="symbol" data-clipboard-text="≯">≯</span>
+        <span class="symbol" data-clipboard-text="≰">≰</span>
+        <span class="symbol" data-clipboard-text="≱">≱</span>
+        <span class="symbol" data-clipboard-text="≲">≲</span>
+        <span class="symbol" data-clipboard-text="≳">≳</span>
+        <span class="symbol" data-clipboard-text="≴">≴</span>
+        <span class="symbol" data-clipboard-text="≵">≵</span>
+        <span class="symbol" data-clipboard-text="≶">≶</span>
+        <span class="symbol" data-clipboard-text="≷">≷</span>
+        <span class="symbol" data-clipboard-text="≸">≸</span>
+        <span class="symbol" data-clipboard-text="≹">≹</span>
+        <span class="symbol" data-clipboard-text="≺">≺</span>
+        <span class="symbol" data-clipboard-text="≻">≻</span>
+        <span class="symbol" data-clipboard-text="≼">≼</span>
+        <span class="symbol" data-clipboard-text="≽">≽</span>
+        <span class="symbol" data-clipboard-text="≾">≾</span>
+        <span class="symbol" data-clipboard-text="≿">≿</span>
+        <span class="symbol" data-clipboard-text="⊀">⊀</span>
+        <span class="symbol" data-clipboard-text="⊁">⊁</span>
+        <span class="symbol" data-clipboard-text="⊂">⊂</span>
+        <span class="symbol" data-clipboard-text="⊃">⊃</span>
+        <span class="symbol" data-clipboard-text="⊄">⊄</span>
+        <span class="symbol" data-clipboard-text="⊅">⊅</span>
+        <span class="symbol" data-clipboard-text="⊆">⊆</span>
+        <span class="symbol" data-clipboard-text="⊇">⊇</span>
+        <span class="symbol" data-clipboard-text="⊈">⊈</span>
+        <span class="symbol" data-clipboard-text="⊉">⊉</span>
+        <span class="symbol" data-clipboard-text="⊊">⊊</span>
+        <span class="symbol" data-clipboard-text="⊋">⊋</span>
+        <span class="symbol" data-clipboard-text="⊌">⊌</span>
+        <span class="symbol" data-clipboard-text="⊍">⊍</span>
+        <span class="symbol" data-clipboard-text="⊎">⊎</span>
+        <span class="symbol" data-clipboard-text="⊏">⊏</span>
+        <span class="symbol" data-clipboard-text="⊐">⊐</span>
+        <span class="symbol" data-clipboard-text="⊑">⊑</span>
+        <span class="symbol" data-clipboard-text="⊒">⊒</span>
+        <span class="symbol" data-clipboard-text="⊓">⊓</span>
+        <span class="symbol" data-clipboard-text="⊔">⊔</span>
+        <span class="symbol" data-clipboard-text="⊕">⊕</span>
+        <span class="symbol" data-clipboard-text="⊖">⊖</span>
+        <span class="symbol" data-clipboard-text="⊗">⊗</span>
+        <span class="symbol" data-clipboard-text="⊘">⊘</span>
+        <span class="symbol" data-clipboard-text="⊙">⊙</span>
+        <span class="symbol" data-clipboard-text="⊚">⊚</span>
+        <span class="symbol" data-clipboard-text="⊛">⊛</span>
+        <span class="symbol" data-clipboard-text="⊜">⊜</span>
+        <span class="symbol" data-clipboard-text="⊝">⊝</span>
+        <span class="symbol" data-clipboard-text="⊞">⊞</span>
+        <span class="symbol" data-clipboard-text="⊟">⊟</span>
+        <span class="symbol" data-clipboard-text="⊠">⊠</span>
+        <span class="symbol" data-clipboard-text="⊡">⊡</span>
+        <span class="symbol" data-clipboard-text="⊢">⊢</span>
+        <span class="symbol" data-clipboard-text="⊣">⊣</span>
+        <span class="symbol" data-clipboard-text="⊤">⊤</span>
+        <span class="symbol" data-clipboard-text="⊥">⊥</span>
+        <span class="symbol" data-clipboard-text="⊦">⊦</span>
+        <span class="symbol" data-clipboard-text="⊧">⊧</span>
+        <span class="symbol" data-clipboard-text="⊨">⊨</span>
+        <span class="symbol" data-clipboard-text="⊩">⊩</span>
+        <span class="symbol" data-clipboard-text="⊪">⊪</span>
+        <span class="symbol" data-clipboard-text="⊫">⊫</span>
+        <span class="symbol" data-clipboard-text="⊬">⊬</span>
+        <span class="symbol" data-clipboard-text="⊭">⊭</span>
+        <span class="symbol" data-clipboard-text="⊮">⊮</span>
+        <span class="symbol" data-clipboard-text="⊯">⊯</span>
+        <span class="symbol" data-clipboard-text="⊰">⊰</span>
+        <span class="symbol" data-clipboard-text="⊱">⊱</span>
+        <span class="symbol" data-clipboard-text="⊲">⊲</span>
+        <span class="symbol" data-clipboard-text="⊳">⊳</span>
+        <span class="symbol" data-clipboard-text="⊴">⊴</span>
+        <span class="symbol" data-clipboard-text="⊵">⊵</span>
+        <span class="symbol" data-clipboard-text="⊶">⊶</span>
+        <span class="symbol" data-clipboard-text="⊷">⊷</span>
+        <span class="symbol" data-clipboard-text="⊸">⊸</span>
+        <span class="symbol" data-clipboard-text="⊹">⊹</span>
+        <span class="symbol" data-clipboard-text="⊺">⊺</span>
+        <span class="symbol" data-clipboard-text="⊻">⊻</span>
+        <span class="symbol" data-clipboard-text="⊼">⊼</span>
+        <span class="symbol" data-clipboard-text="⊽">⊽</span>
+        <span class="symbol" data-clipboard-text="⊾">⊾</span>
+        <span class="symbol" data-clipboard-text="⊿">⊿</span>
+        <span class="symbol" data-clipboard-text="⋀">⋀</span>
+        <span class="symbol" data-clipboard-text="⋁">⋁</span>
+        <span class="symbol" data-clipboard-text="⋂">⋂</span>
+        <span class="symbol" data-clipboard-text="⋃">⋃</span>
+        <span class="symbol" data-clipboard-text="⋄">⋄</span>
+        <span class="symbol" data-clipboard-text="⋅">⋅</span>
+        <span class="symbol" data-clipboard-text="⋆">⋆</span>
+        <span class="symbol" data-clipboard-text="⋇">⋇</span>
+        <span class="symbol" data-clipboard-text="⋈">⋈</span>
+        <span class="symbol" data-clipboard-text="⋉">⋉</span>
+        <span class="symbol" data-clipboard-text="⋊">⋊</span>
+        <span class="symbol" data-clipboard-text="⋋">⋋</span>
+        <span class="symbol" data-clipboard-text="⋌">⋌</span>
+        <span class="symbol" data-clipboard-text="⋍">⋍</span>
+        <span class="symbol" data-clipboard-text="⋎">⋎</span>
+        <span class="symbol" data-clipboard-text="⋏">⋏</span>
+        <span class="symbol" data-clipboard-text="⋐">⋐</span>
+        <span class="symbol" data-clipboard-text="⋑">⋑</span>
+        <span class="symbol" data-clipboard-text="⋒">⋒</span>
+        <span class="symbol" data-clipboard-text="⋓">⋓</span>
+        <span class="symbol" data-clipboard-text="⋔">⋔</span>
+        <span class="symbol" data-clipboard-text="⋕">⋕</span>
+        <span class="symbol" data-clipboard-text="⋖">⋖</span>
+        <span class="symbol" data-clipboard-text="⋗">⋗</span>
+        <span class="symbol" data-clipboard-text="⋘">⋘</span>
+        <span class="symbol" data-clipboard-text="⋙">⋙</span>
+        <span class="symbol" data-clipboard-text="⋚">⋚</span>
+        <span class="symbol" data-clipboard-text="⋛">⋛</span>
+        <span class="symbol" data-clipboard-text="⋜">⋜</span>
+        <span class="symbol" data-clipboard-text="⋝">⋝</span>
+        <span class="symbol" data-clipboard-text="⋞">⋞</span>
+        <span class="symbol" data-clipboard-text="⋟">⋟</span>
+        <span class="symbol" data-clipboard-text="⋠">⋠</span>
+        <span class="symbol" data-clipboard-text="⋡">⋡</span>
+        <span class="symbol" data-clipboard-text="⋢">⋢</span>
+        <span class="symbol" data-clipboard-text="⋣">⋣</span>
+        <span class="symbol" data-clipboard-text="⋤">⋤</span>
+        <span class="symbol" data-clipboard-text="⋥">⋥</span>
+        <span class="symbol" data-clipboard-text="⋦">⋦</span>
+        <span class="symbol" data-clipboard-text="⋧">⋧</span>
+        <span class="symbol" data-clipboard-text="⋨">⋨</span>
+        <span class="symbol" data-clipboard-text="⋩">⋩</span>
+        <span class="symbol" data-clipboard-text="⋪">⋪</span>
+        <span class="symbol" data-clipboard-text="⋫">⋫</span>
+        <span class="symbol" data-clipboard-text="⋬">⋬</span>
+        <span class="symbol" data-clipboard-text="⋭">⋭</span>
+        <span class="symbol" data-clipboard-text="⋮">⋮</span>
+        <span class="symbol" data-clipboard-text="⋯">⋯</span>
+        <span class="symbol" data-clipboard-text="⋰">⋰</span>
+        <span class="symbol" data-clipboard-text="⋱">⋱</span>
+        <span class="symbol" data-clipboard-text="⁺">⁺</span>
+        <span class="symbol" data-clipboard-text="⁻">⁻</span>
+        <span class="symbol" data-clipboard-text="⁼">⁼</span>
+        <span class="symbol" data-clipboard-text="⁽">⁽</span>
+        <span class="symbol" data-clipboard-text="⁾">⁾</span>
+        <span class="symbol" data-clipboard-text="ⁿ">ⁿ</span>
+        <span class="symbol" data-clipboard-text="₊">₊</span>
+        <span class="symbol" data-clipboard-text="₋">₋</span>
+        <span class="symbol" data-clipboard-text="₌">₌</span>
+        <span class="symbol" data-clipboard-text="₍">₍</span>
+        <span class="symbol" data-clipboard-text="₎">₎</span>
+        <span class="symbol" data-clipboard-text="✖">✖</span>
+        <span class="symbol" data-clipboard-text="﹢">﹢</span>
+        <span class="symbol" data-clipboard-text="﹣">﹣</span>
+        <span class="symbol" data-clipboard-text="＋">＋</span>
+        <span class="symbol" data-clipboard-text="－">－</span>
+        <span class="symbol" data-clipboard-text="／">／</span>
+        <span class="symbol" data-clipboard-text="＝">＝</span>
+        <span class="symbol" data-clipboard-text="÷">÷</span>
+        <span class="symbol" data-clipboard-text="±">±</span>
+        <span class="symbol" data-clipboard-text="×">×</span>
+    </div>
+  </div>
+  
+      <div align="center" id="create">
+        
+      </div>
+
+      <!-- Modal Trigger -->
+  <!-- <a class="waves-effect waves-light btn modal-trigger" id="modal_btn" href="#modal1" style="display: none;">Modal</a> -->
+
+  <!-- Modal Structure -->
+  <div id="modal1" class="modal">
+    <div class="modal-content">
+      <h4 id="model_txt"></h4>
+      <p></p>
+    </div>
+    <div class="modal-footer">
+      <a href="#!" id="agree" class="modal-close waves-effect waves-green btn-flat response">Agree</a>
+      <a href="#!" id="disagree" class="modal-close waves-effect waves-red btn-flat response">Disagree</a>
+    </div>
+  </div>
+
+      <span id="shared_screen" style="float:left;height: 20%;width:20%;"></span>
+  
+        <div class="videos" style="text-align: right;">
+          
+        </div>
+        
+        <br />
+        <span id="connections"></span>
+        <!-- *Double click to fill or resize -->
+     <div id="container"></div>
+     <script>
+       let name=`<%=name%>`;
+       let myclass=`<%= myclass %>`
+       let category=`<%= category %>`
+       console.log(name)
+       console.log(myclass);
+       console.log(category)
+     </script>
+    <script src="conference.js"></script>
+    <script src="chat.js"></script>
+    <script src="board.js"></script>
+    <script src="sidenav_board.js"></script>
+  </body>
+</html>

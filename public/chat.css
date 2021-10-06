@@ -1,0 +1,143 @@
+#chatbtn {
+    position: fixed;
+    bottom:1%;
+    right:1%;
+    /* height: 100px; */
+    /* width:100px; */
+}
+
+#chatwindow {
+    position: fixed;
+    border-radius: 10%;
+    bottom: 8%;
+    right: 1%;
+    height:30%;
+    width:70%;
+    background-color: whitesmoke;
+    display: none;
+}
+
+.color_picker{
+    display: none;
+}
+
+@media only screen and (min-width: 1000px) {
+    #chatwindow{
+        width: 25%;
+        height: 70%;
+    }
+    .color_picker{
+        display: inline-block;
+    }
+}
+
+#chatmsgs {
+    height: 64%;
+    overflow-y: scroll;
+    max-height: 64%;
+}
+
+.form_content{
+    position: absolute;
+    /* width: 100%; */
+    /* display: block; */
+    bottom:5%;
+    /* text-align: center; */
+}
+
+input{
+    width: 10%;
+}
+
+.drag{
+    position: fixed;
+    padding: 1.5%;
+    left:50%;
+}
+
+.drag>textarea{
+    background-color: transparent;
+}
+
+.drag:hover{
+    cursor: crosshair;
+}
+
+a{
+    text-decoration: none;
+    color: white;
+}
+
+#chat_header{
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: white;
+    background-color: black;
+    padding: 5%;
+    border-top-right-radius: 30px;
+    border-top-left-radius: 30px;
+}
+
+.message-blue {
+    position: relative;
+    display: block;
+    /* left:0; */
+    margin-left: 20px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #A8DDFD;
+    width: 50%;
+    text-align: left;
+    font: 400 normal;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    border: 1px solid #97C6E3;
+    border-radius: 10px;
+    border-bottom-left-radius: 0;
+}
+
+.message-orange {
+    position: relative;
+    display: block;
+    margin-bottom: 10px;
+    margin-left: 45%;
+    padding: 10px;
+    background-color: #f8e896;
+    width: 50%;
+    text-align: left;
+    font: 400 normal;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    border: 1px solid #dfd087;
+    border-radius: 10px;
+    border-bottom-right-radius: 0;
+}
+
+.message-timestamp-right {
+    position: absolute;
+    font-size: small;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-weight: 300;
+    bottom: 1%;
+    right: 5%;
+    color: grey;
+}
+
+.message-timestamp-left {
+    position: absolute;
+    font-size: small;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-weight: 300;
+    bottom: 1%;
+    left: 5%;
+    color: grey;
+}
+
+.clickable{
+    cursor: pointer;
+    position: absolute;
+    right: 1%;
+}
+
+#fileInput{
+    opacity: 0;
+    position: absolute;
+    z-index: -1;
+}
